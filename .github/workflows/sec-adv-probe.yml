@@ -1,0 +1,26 @@
+# sec-adv-probe.yml — manual probe: does THIS repository's GitHub-hosted
+# runner reach reports.adviserinfo.sec.gov, and which feed date is published?
+#
+# HEAD requests only: the SEC feed for today back through 7 days until one
+# answers 200, then both feeds' Content-Length. Nothing is downloaded, nothing
+# is uploaded, no server, no secrets, no artifact. Manual dispatch only.
+name: SEC ADV probe
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -q -r requirements.txt
+      - name: Probe (statuses and sizes only)
+        run: python sec_adv_fetch.py --probe

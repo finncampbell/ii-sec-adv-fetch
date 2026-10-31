@@ -1,0 +1,2 @@
+# Talks to the SEC's public compilation-report host and to OUR server only.
+requests==2.32.3

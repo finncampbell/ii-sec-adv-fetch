@@ -1,0 +1,44 @@
+# sec-adv-fetch.yml — weekly SEC Form ADV compilation feed fetch (owner's
+# private repo: CLAUDE.md covenants #12/#16, DEC-012).
+#
+# Every Monday 09:00 UTC one job probes reports.adviserinfo.sec.gov for the
+# most recent published feed date, downloads the SEC- and State-registered
+# adviser feeds into memory and POSTs each to the private server's
+# authenticated ingest endpoint; the server's 06:00 UTC daily run ingests what
+# has landed. A feed the server already holds answers "already_have" — a
+# success — so re-runs and manual dispatches are safe no-ops.
+# No artifacts — nothing is kept here.
+#
+# Secrets (repository settings, owner only): PIPELINE_SERVER_URL, PIPELINE_INGEST_TOKEN.
+# GitHub disables cron on public repositories after 60 days without a commit;
+# the monthly sync from the private repository keeps it alive.
+name: SEC ADV fetch
+
+on:
+  schedule:
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: sec-adv-fetch
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -q -r requirements.txt
+      - name: Fetch and deliver
+        env:
+          SERVER_URL: ${{ secrets.PIPELINE_SERVER_URL }}
+          PIPELINE_INGEST_TOKEN: ${{ secrets.PIPELINE_INGEST_TOKEN }}
+          PROBE_DAYS: "8"
+        run: python sec_adv_fetch.py
